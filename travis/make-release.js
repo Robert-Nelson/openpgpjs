@@ -65,19 +65,23 @@ client.repos.getAllReleases(
         );
       }
       if (release.id) {
-        client.repos.uploadReleaseAsset(
-          {
-            "owner": release.owner,
-            "repo": release.repo,
-            "id": release.id,
-            "content_type": "text/javascript",
-            "name": "openpgp.min.js",
-            "content": fs.readFileSync("dist/openpgp.min.js")
-          },
-          function (err, res) {
-              console.log("repos.uploadReleaseAsset:\n", err, res);
-          }
-        );
+        [ "openpgp.min.js", pkg.name + "-" + pkg.version + ".tgz" ].forEach(function (asset) {
+          client.repos.uploadReleaseAsset(
+            {
+              "owner": release.owner,
+              "repo": release.repo,
+              "id": release.id,
+              "content_type": "text/javascript",
+              "name": asset,
+              "content": fs.readFileSync("dist/" + asset)
+            },
+            function (err, res) {
+              if (err) {
+                console.log("repos.uploadReleaseAsset:\n", err);
+              }
+            }
+          );
+        });
       }
     } else {
       console.log("repos.getAllReleases:\n", err);
