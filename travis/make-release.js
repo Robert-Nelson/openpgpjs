@@ -4,8 +4,8 @@ var Client = require('github');
 
 var repoPath = process.env['TRAVIS_REPO_SLUG'].split('/');
 
-var owner = repopath[0];
-var repo = repopath[1];
+var owner = repoPath[0];
+var repo = repoPath[1];
 var token = process.env['GITHUB_TOKEN'];
 
 var pkg = JSON.parse(fs.readFileSync('package.json', { encoding: 'utf8' }));
