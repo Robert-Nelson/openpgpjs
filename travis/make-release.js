@@ -52,7 +52,7 @@ client.repos.getAllReleases(
           );
         }
       });
-      if (!relinfo.id) {
+      if (!release.id) {
         client.repos.createRelease(
           release,
           function (err, res) {
@@ -64,7 +64,7 @@ client.repos.getAllReleases(
           }
         );
       }
-      if (relinfo.id) {
+      if (release.id) {
         client.repos.uploadReleaseAsset(
           {
             "owner": release.owner,
