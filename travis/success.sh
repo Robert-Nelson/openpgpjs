@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 if [ "${TRAVIS_BRANCH}" == "master" -o true ]; then
     echo TRAVIS_BRANCH=${TRAVIS_BRANCH}
     echo TRAVIS_COMMIT=${TRAVIS_COMMIT}
