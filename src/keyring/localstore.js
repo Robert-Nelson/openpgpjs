@@ -20,37 +20,44 @@
  * @requires openpgp
  * @module keyring/localstore
  */
+module.exports = LocalStore;
 
-var openpgp = require('openpgp');
+var openpgp = require('../');
 
-module.exports = function () {
-  /**
-   * Load the keyring from HTML5 local storage and initializes this instance.
-   * @return {Array<module:key~Key>} array of keys retrieved from localstore
-   */
-  this.load = function () {
-    var armoredKeys = JSON.parse(window.localStorage.getItem("armoredKeys"));
-    var keys = [];
-    if (armoredKeys !== null && armoredKeys.length !== 0) {
-      var key;
-      for (var i = 0; i < armoredKeys.length; i++) {
-        key = openpgp.key.readArmored(armoredKeys[i]);
-        keys.push(key);
-      }
+function LocalStore() {
+  if (typeof window != 'undefined' && window.localStorage) {
+    this.storage = window.localStorage;
+  } else {
+    this.storage = new (require('node-localstorage').LocalStorage)(openpgp.config.node_store);
+  }
+}
+
+/**
+ * Load the keyring from HTML5 local storage and initializes this instance.
+ * @return {Array<module:key~Key>} array of keys retrieved from localstore
+ */
+LocalStore.prototype.load = function () {
+  var armoredKeys = JSON.parse(this.storage.getItem('armoredKeys'));
+  var keys = [];
+  if (armoredKeys !== null && armoredKeys.length !== 0) {
+    var key;
+    for (var i = 0; i < armoredKeys.length; i++) {
+      key = openpgp.key.readArmored(armoredKeys[i]);
+      keys.push(key);
     }
-    return keys;
-  };
+  }
+  return keys;
+};
 
-  /**
-   * Saves the current state of the keyring to HTML5 local storage.
-   * The privateKeys array and publicKeys array gets Stringified using JSON
-   * @param {Array<module:key~Key>} keys array of keys to save in localstore
-   */
-  this.store = function (keys) {
-    var armoredKeys = [];
-    for (var i = 0; i < keys.length; i++) {
-      armoredKeys.push(keys[i].armor());
-    }
-    window.localStorage.setItem("armoredKeys", JSON.stringify(armoredKeys));
-  };
+/**
+ * Saves the current state of the keyring to HTML5 local storage.
+ * The privateKeys array and publicKeys array gets Stringified using JSON
+ * @param {Array<module:key~Key>} keys array of keys to save in localstore
+ */
+LocalStore.prototype.store = function (keys) {
+  var armoredKeys = [];
+  for (var i = 0; i < keys.length; i++) {
+    armoredKeys.push(keys[i].armor());
+  }
+  this.storage.setItem('armoredKeys', JSON.stringify(armoredKeys));
 };

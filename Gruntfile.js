@@ -6,84 +6,56 @@ module.exports = function(grunt) {
     browserify: {
       openpgp_nodebug: {
         files: {
-          'resources/openpgp_nodebug.js': []
+          'dist/openpgp_nodebug.js': [ './src/index.js' ]
         },
         options: {
-          alias: './src/:openpgp'
+          standalone: 'openpgp',
+          external: [ 'crypto', 'node-localstorage' ]
         }
       },
       openpgp: {
         files: {
-          'resources/openpgp.js': []
+          'dist/openpgp.js': [ './src/index.js' ]
         },
         options: {
           debug: true,
-          alias: './src/:openpgp'
-        }
-      },
-      keyring_nodebug: {
-        files: {
-          'resources/keyring_nodebug.js': []
-        },
-        options: {
-          alias: './src/keyring/:keyring',
-          external: [ 'openpgp' ]
-        }
-      },
-      keyring: {
-        files: {
-          'resources/keyring.js': []
-        },
-        options: {
-          debug: true,
-          alias: './src/keyring/:keyring',
-          external: [ 'openpgp' ]
+          standalone: 'openpgp',
+          external: [ 'crypto', 'node-localstorage' ]
         }
       },
       unittests: {
         files: {
-          'test/lib/test-bundle.js': []
+          'test/lib/unittests-bundle.js': []
         },
         options: {
           debug: true,
-          alias: './test/test-all.js:unittests',
-          external: [ 'openpgp', 'keyring' ]
-        }
-      },
-      ci_tests: {
-        files: {
-          'test/lib/ci-tests-bundle.js': []
-        },
-        options: {
-          debug: true,
-          alias: './test/ci-tests-all.js:ci-tests',
-          external: [ 'openpgp', 'keyring' ]
+          alias: './test/unittests.js:unittests',
+          external: [ 'openpgp' ]
         }
       }
     },
-    replace : {
-      openpgpjs: {
-        src: ['resources/openpgp.js'],
-        dest: ['resources/openpgp.js'],
+    replace: {
+      openpgp: {
+        src: ['dist/openpgp.js'],
+        dest: ['dist/openpgp.js'],
         replacements: [{
           from: /OpenPGP.js VERSION/g,
-          to: 'OpenPGP.js v<%= pkg.version %>.<%= grunt.template.today("yyyymmdd") %>'
+          to: 'OpenPGP.js v<%= pkg.version %>'
         }]
       },
-      openpgpjs_nodebug: {
-        src: ['resources/openpgp_nodebug.js'],
-        dest: ['resources/openpgp_nodebug.js'],
+      openpgp_nodebug: {
+        src: ['dist/openpgp_nodebug.js'],
+        dest: ['dist/openpgp_nodebug.js'],
         replacements: [{
           from: /OpenPGP.js VERSION/g,
-          to: 'OpenPGP.js v<%= pkg.version %>.<%= grunt.template.today("yyyymmdd") %>'
+          to: 'OpenPGP.js v<%= pkg.version %>'
         }]
       }
     },
     uglify: {
-      openpgpjs: {
+      openpgp: {
         files: {
-          "resources/openpgp.min.js" : [ "resources/openpgp_nodebug.js" ],
-          "resources/keyring.min.js" : [ "resources/keyring_nodebug.js" ]
+          'dist/openpgp.min.js' : [ 'dist/openpgp_nodebug.js' ]
         }
       },
       options: {
@@ -91,9 +63,9 @@ module.exports = function(grunt) {
           '<%= grunt.template.today("yyyy-mm-dd") %> */'
       }
     },
-    jsbeautifier : {
-      files : ["src/**/*.js"],
-      options : {
+    jsbeautifier: {
+      files: ['src/**/*.js'],
+      options: {
         indent_size: 2,
         preserve_newlines: true,
         keep_array_indentation: false,
@@ -101,58 +73,85 @@ module.exports = function(grunt) {
         wrap_line_length: 120
       }
     },
-    jshint : {
-      all : ["src/**/*.js"]
+    jshint: {
+      all: ['src/**/*.js']
     },
-    jsdoc : {
-      dist : {
-        src: ["README.md", "src"],
+    jsdoc: {
+      dist: {
+        src: ['README.md', 'src'],
         options: {
-          destination: "doc",
+          destination: 'doc',
           recurse: true,
-          template: "jsdoc.template"
+          template: 'jsdoc.template'
         }
       }
     },
-
+    mochaTest: {
+      unittests: {
+        options: {
+          reporter: 'spec'
+        },
+        src: [ 'test/unittests.js' ]
+      }
+    },
     copy: {
       npm: {
         expand: true,
         flatten: true,
         cwd: 'node_modules/',
-        src: ['mocha/mocha.css', 'mocha/mocha.js', 'chai/chai.js', 'sinon/pkg/sinon.js'],
+        src: ['mocha/mocha.css', 'mocha/mocha.js', 'chai/chai.js'],
         dest: 'test/lib/'
       }
     }
   });
 
-  // Load the plugin that provides the "uglify" task.
+  // Load the plugin(s)
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-text-replace');
   grunt.loadNpmTasks('grunt-jsbeautifier');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-jsdoc');
+  grunt.loadNpmTasks('grunt-mocha-test');
+  grunt.loadNpmTasks('grunt-contrib-copy');
 
   grunt.registerTask('default', 'Build OpenPGP.js', function() {
-    grunt.task.run(['browserify', 'replace', 'uglify']);
+    grunt.task.run(['browserify', 'replace', 'uglify', 'npm_pack']);
     //TODO jshint is not run because of too many discovered issues, once these are addressed it should autorun
     grunt.log.ok('Before Submitting a Pull Request please also run `grunt jshint`.');
   });
-  grunt.registerTask('documentation', ['jsdoc']);
 
-  // Load the plugin(s)
-  grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.registerTask('documentation', ['jsdoc']);
 
   // Alias the `mocha_phantomjs` task to run `mocha-phantomjs`
   grunt.registerTask('mocha_phantomjs', 'mocha-phantomjs', function () {
     var done = this.async();
-    require('child_process').exec('node_modules/mocha-phantomjs/bin/mocha-phantomjs ./test/ci-tests.html', function (err, stdout) {
-      grunt.log.write(stdout);
+    var mocha = require('child_process').exec('node_modules/mocha-phantomjs/bin/mocha-phantomjs ./test/unittests.html', function (err) {
       done(err);
     });
+    mocha.stdout.pipe(process.stdout);
+    mocha.stderr.pipe(process.stderr);
   });
 
-  // Test/Dev tasks
-  grunt.registerTask('test', ['copy', 'mocha_phantomjs']);
+  // Alias the `npm_pack` task to run `npm pack`
+  grunt.registerTask('npm_pack', 'npm pack', function () {
+    var done = this.async();
+    var npm = require('child_process').exec('npm pack ../', { cwd: 'dist'}, function (err, stdout) {
+      var package = stdout;
+      if (err === null) {
+        var install = require('child_process').exec('npm install dist/' + package, function (err) {
+          done(err);
+        });
+        install.stdout.pipe(process.stdout);
+        install.stderr.pipe(process.stderr);
+      } else {
+        done(err);
+      }
+    });
+    npm.stdout.pipe(process.stdout);
+    npm.stderr.pipe(process.stderr);
+  });
+
+    // Test/Dev tasks
+  grunt.registerTask('test', ['copy', 'mochaTest', 'mocha_phantomjs']);
 };

@@ -23,6 +23,11 @@
  */
 
 var type_mpi = require('../type/mpi.js');
+var nodeCrypto = null;
+
+if (typeof window === 'undefined') {
+  nodeCrypto = require('crypto');
+}
 
 module.exports = {
   /**
@@ -56,17 +61,30 @@ module.exports = {
    */
   getSecureRandom: function(from, to) {
     var buf = new Uint32Array(1);
-    window.crypto.getRandomValues(buf);
+    this.getRandomValues(buf);
     var bits = ((to - from)).toString(2).length;
     while ((buf[0] & (Math.pow(2, bits) - 1)) > (to - from))
-      window.crypto.getRandomValues(buf);
+      this.getRandomValues(buf);
     return from + (Math.abs(buf[0] & (Math.pow(2, bits) - 1)));
   },
 
   getSecureRandomOctet: function() {
     var buf = new Uint32Array(1);
-    window.crypto.getRandomValues(buf);
+    this.getRandomValues(buf);
     return buf[0] & 0xFF;
+  },
+
+  /**
+   * Helper routine which calls platform specific crypto random generator
+   * @param {Uint32Array} buf
+   */
+  getRandomValues: function(buf) {
+    if (nodeCrypto === null) {
+      window.crypto.getRandomValues(buf);
+    } else {
+      var bytes = nodeCrypto.randomBytes(4);
+      buf[0] = (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
+    }
   },
 
   /**

@@ -1,37 +1,57 @@
-OpenPGP.js [![Build Status](https://secure.travis-ci.org/openpgpjs/openpgpjs.png?branch=master,v0.1.x)](http://travis-ci.org/openpgpjs/openpgpjs)
+OpenPGP.js
 ==========
 
 [OpenPGP.js](http://openpgpjs.org/) is a Javascript implementation of the OpenPGP protocol. This is defined in [RFC 4880](http://tools.ietf.org/html/rfc4880).
 
-# How do I use it?
-To build the library, checkout the HEAD of the master branch or download a stable (old) tagged version from [releases](https://github.com/openpgpjs/openpgpjs/releases).
+[![Build Status](https://secure.travis-ci.org/openpgpjs/openpgpjs.png?branch=master,v0.1.x)](http://travis-ci.org/openpgpjs/openpgpjs)
 
-Then build the library:
+### Node support
+
+For server side use, install via npm:
+
+    npm install openpgp
+
+Example:
+
+    var openpgp = require('openpgp');
+    var key = '-----BEGIN PGP PUBLIC KEY BLOCK ... END PGP PUBLIC KEY BLOCK-----';
+    var publicKey = openpgp.key.readArmored(key);
+    var pgpMessage = openpgp.encryptMessage(publicKey.keys, 'Hello, World!');
+
+### Browser support
+
+Fetch a minified build under [releases](https://github.com/openpgpjs/openpgpjs/releases). The library can be loaded via  AMD/require.js or accessed globally via `window.openpgp`.
+
+OpenPGP.js currently only fully supports browsers that implement `window.crypto.getRandomValues`. If you can help us support more browsers and runtimes, please chip in!
+
+### To build
 
     npm install && grunt
 
-Then take the use the minified file from `resources/openpgp.min.js` and use it in your project.
+Then take `dist/openpgp.min.js` to use in your project.
 
-# I need some help
-## Mailing List
+### Run tests
+
+    npm install && npm test
+
+### Documentation
+
+A jsdoc build of our code comments is available at [doc/index.html](http://openpgpjs.org/openpgpjs/doc/index.html). Public calls should generally be made through the OpenPGP object [doc/openpgp.html](http://openpgpjs.org/openpgpjs/doc/module-openpgp.html).
+
+### Mailing List
+
 You can [sign up](http://list.openpgpjs.org/) for our mailing list and ask for help there.  We've recently worked on getting our [archive up and running](http://www.mail-archive.com/list@openpgpjs.org/).
 
-## Documentation
-A jsdoc build of our code comments is available at [doc/index.html](doc/index.html). Public calls should generally be made through the OpenPGP object [doc/openpgp.html](doc/openpgp.html).
+### How do I get involved?
 
-# How do I get involved?
-You want to help, great! Go ahead and fork our repo, make your changes
-and make a pull request.
+You want to help, great! Go ahead and fork our repo, make your changes and send us a pull request.
 
-It is extra awesome if you write tests for the code you change. Our test coverage is relatively weak, so if you can add cases that is great.
+### License
 
-# What License do you use?
 GNU Lesser General Public License (2.1). Please take a look at the [LICENSE](LICENSE) file for more information.
 
-# What are the requirements to use it?
-OpenPGP.js currently only fully supports Chrome. Firefox support should be coming soon with the advent of Firefox 23 with native javascript support for `window.crypto.getRandomValues`. If you can help us support more browsers and situations, please chip in!
+### Resources
 
-# Resources
 Below is a collection of resources, many of these were projects that were in someway a precursor to the current OpenPGP.js project. If you'd like to add your link here, please do so in a pull request or email to the list.
 
 * [http://www.hanewin.net/encrypt/](http://www.hanewin.net/encrypt/)

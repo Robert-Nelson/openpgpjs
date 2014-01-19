@@ -1,9 +1,11 @@
-var unit = require('../unit.js');
+'use strict';
 
-unit.register("Packet testing", function() {
+var openpgp = typeof window != 'undefined' && window.openpgp ? window.openpgp : require('../../src/index');
 
-	var openpgp = require('openpgp');
+var chai = require('chai'),
+  expect = chai.expect;
 
+describe("Packet", function() {
 	var armored_key =
 		'-----BEGIN PGP PRIVATE KEY BLOCK-----\n' +
 		'Version: GnuPG v2.0.19 (GNU/Linux)\n' +
@@ -41,14 +43,13 @@ unit.register("Packet testing", function() {
 		'=KXkj\n' +
 		'-----END PGP PRIVATE KEY BLOCK-----';
 
+  it('Symmetrically encrypted packet', function(done) {
+		var message = new openpgp.packet.List();
 
-	var tests = [function() {
-		var message = new openpgp.packet.list();
-
-		var literal = new openpgp.packet.literal();
+		var literal = new openpgp.packet.Literal();
 		literal.setText('Hello world');
 		
-		var enc = new openpgp.packet.symmetrically_encrypted();
+		var enc = new openpgp.packet.SymmetricallyEncrypted();
 		message.push(enc);
 		enc.packets.push(literal);
 
@@ -57,42 +58,39 @@ unit.register("Packet testing", function() {
 
 		enc.encrypt(algo, key);
 
-
-
-		var msg2 = new openpgp.packet.list();
+		var msg2 = new openpgp.packet.List();
 		msg2.read(message.write());
 
 		msg2[0].decrypt(algo, key);
 
-		return new unit.result('Symmetrically encrypted packet', 
-			msg2[0].packets[0].data == literal.data);
+    expect(msg2[0].packets[0].data).to.equal(literal.data);
+    done();
+  });
 
-	}, function() {
+  it('Sym. encrypted integrity protected packet', function(done) {
 		var key = '12345678901234567890123456789012',
 			algo = 'aes256';
 
-		var literal = new openpgp.packet.literal(),
-			enc = new openpgp.packet.sym_encrypted_integrity_protected(),
-			msg = new openpgp.packet.list();
+		var literal = new openpgp.packet.Literal(),
+			enc = new openpgp.packet.SymEncryptedIntegrityProtected(),
+			msg = new openpgp.packet.List();
 
 		msg.push(enc);
 		literal.setText('Hello world!');
 		enc.packets.push(literal);
 		enc.encrypt(algo, key);
 		
-
-
-		var msg2 = new openpgp.packet.list();
+		var msg2 = new openpgp.packet.List();
 		msg2.read(msg.write());
 
 		msg2[0].decrypt(algo, key);
 
-		return new unit.result('Sym. encrypted integrity protected packet', 
-			msg2[0].packets[0].data == literal.data);
-	
-	}, function() {
-			
-		var msg = 
+    expect(msg2[0].packets[0].data).to.equal(literal.data);
+    done();
+  });
+
+  it('Sym encrypted session key with a compressed packet', function(done) {
+		var msg =
 			'-----BEGIN PGP MESSAGE-----\n' +
 			'Version: GnuPG v2.0.19 (GNU/Linux)\n' +
 			'\n' +
@@ -101,11 +99,9 @@ unit.register("Packet testing", function() {
 			'=VZ0/\n' +
 			'-----END PGP MESSAGE-----';
 
-
-
 		var msgbytes = openpgp.armor.decode(msg).data;
 
-		var parsed = new openpgp.packet.list();
+		var parsed = new openpgp.packet.List();
 		parsed.read(msgbytes);
 
 		parsed[0].decrypt('test');
@@ -116,25 +112,25 @@ unit.register("Packet testing", function() {
 
 		var result = compressed.packets[0].data;
 
-		return new unit.result('Sym encrypted session key with a compressed packet',
-			result == 'Hello world!\n');
+    expect(result).to.equal('Hello world!\n');
+    done();
+  });
 
-	}, function() {
-	
+  it('Public key encrypted symmetric key packet', function(done) {
 		var rsa = new openpgp.crypto.publicKey.rsa(),
 			mpi = rsa.generate(512, "10001")
 
 		var mpi = [mpi.n, mpi.ee, mpi.d, mpi.p, mpi.q, mpi.u];
 
 		mpi = mpi.map(function(k) {
-				var mpi = new openpgp.mpi();
+				var mpi = new openpgp.MPI();
 				mpi.fromBigInteger(k);
 				return mpi;
 		});
 
-		var enc = new openpgp.packet.public_key_encrypted_session_key(),
-			msg = new openpgp.packet.list(),
-			msg2 = new openpgp.packet.list();
+		var enc = new openpgp.packet.PublicKeyEncryptedSessionKey(),
+			msg = new openpgp.packet.List(),
+			msg2 = new openpgp.packet.List();
 
 		enc.sessionKey = '12345678901234567890123456789012';
 		enc.publicKeyAlgorithm = 'rsa_encrypt';
@@ -148,10 +144,12 @@ unit.register("Packet testing", function() {
 
 		msg2[0].decrypt({ mpi: mpi });
 
-		return new unit.result('Public key encrypted symmetric key packet', 
-			msg2[0].sessionKey == enc.sessionKey &&
-			msg2[0].sessionKeyAlgorithm == enc.sessionKeyAlgorithm);
-	}, function() {
+    expect(msg2[0].sessionKey).to.equal(enc.sessionKey);
+		expect(msg2[0].sessionKeyAlgorithm).to.equal(enc.sessionKeyAlgorithm);
+    done();
+  });
+
+  it('Secret key packet (reading, unencrpted)', function(done) {
 		var armored_key = 
 			'-----BEGIN PGP PRIVATE KEY BLOCK-----\n' +
 			'Version: GnuPG v2.0.19 (GNU/Linux)\n' +
@@ -174,11 +172,11 @@ unit.register("Packet testing", function() {
 			'=lKiS\n' +
 			'-----END PGP PRIVATE KEY BLOCK-----';
 
-		key = new openpgp.packet.list();
+		var key = new openpgp.packet.List();
 		key.read(openpgp.armor.decode(armored_key).data);
 		key = key[0];
 
-		var enc = new openpgp.packet.public_key_encrypted_session_key(),
+		var enc = new openpgp.packet.PublicKeyEncryptedSessionKey(),
 			secret = '12345678901234567890123456789012';
 
 		enc.sessionKey = secret;
@@ -190,10 +188,11 @@ unit.register("Packet testing", function() {
 
 		enc.decrypt(key);
 
-		return new unit.result('Secret key packet (reading, unencrpted)',
-			enc.sessionKey == secret);
-	}, function() {
+		expect(enc.sessionKey).to.equal(secret);
+    done();
+  });
 
+  it('Public key encrypted packet (reading, GPG)', function(done) {
 		var armored_key =
 			'-----BEGIN PGP PRIVATE KEY BLOCK-----\n' +
 			'Version: GnuPG v2.0.19 (GNU/Linux)\n' +
@@ -242,11 +241,11 @@ unit.register("Packet testing", function() {
 			'-----END PGP MESSAGE-----';
 
 
-		var key = new openpgp.packet.list();
+		var key = new openpgp.packet.List();
 		key.read(openpgp.armor.decode(armored_key).data);
 		key = key[3];
 
-		var msg = new openpgp.packet.list();
+		var msg = new openpgp.packet.List();
 		msg.read(openpgp.armor.decode(armored_msg).data);
 
 		msg[0].decrypt(key);
@@ -254,18 +253,18 @@ unit.register("Packet testing", function() {
 
 		var text = msg[1].packets[0].packets[0].data;
 
+    expect(text).to.equal('Hello world!');
+    done();
+  });
 
-		return new unit.result('Public key encrypted packet (reading, GPG)',
-			text == 'Hello world!');
-	}, function() {
-
+  it('Sym encrypted session key reading/writing', function(done) {
 		var passphrase = 'hello',
 			algo = 'aes256';
 
-		var literal = new openpgp.packet.literal(),
-			key_enc = new openpgp.packet.sym_encrypted_session_key(),
-			enc = new openpgp.packet.sym_encrypted_integrity_protected(),
-			msg = new openpgp.packet.list();
+		var literal = new openpgp.packet.Literal(),
+			key_enc = new openpgp.packet.SymEncryptedSessionKey(),
+			enc = new openpgp.packet.SymEncryptedIntegrityProtected(),
+			msg = new openpgp.packet.List();
 
 		msg.push(key_enc);
 		msg.push(enc);
@@ -280,18 +279,18 @@ unit.register("Packet testing", function() {
 		enc.encrypt(algo, key);
 
 
-		var msg2 = new openpgp.packet.list();
+		var msg2 = new openpgp.packet.List();
 		msg2.read(msg.write());
 
 		msg2[0].decrypt(passphrase);
 		var key2 = msg2[0].sessionKey;
 		msg2[1].decrypt(msg2[0].sessionKeyAlgorithm, key2);
 
+    expect(msg2[1].packets[0].data).to.equal(literal.data);
+    done();
+  });
 
-		return new unit.result('Sym encrypted session key reading/writing', 
-			msg2[1].packets[0].data == literal.data);
-	
-	}, function() {
+  it('Secret key encryption/decryption test', function(done) {
 		var armored_msg = 
 			'-----BEGIN PGP MESSAGE-----\n' +
 			'Version: GnuPG v2.0.19 (GNU/Linux)\n' +
@@ -304,12 +303,12 @@ unit.register("Packet testing", function() {
 			'=pR+C\n' +
 			'-----END PGP MESSAGE-----';
 
-		var key = new openpgp.packet.list();
+		var key = new openpgp.packet.List();
 		key.read(openpgp.armor.decode(armored_key).data);
 		key = key[3];
 		key.decrypt('test');
 
-		var msg = new openpgp.packet.list();
+		var msg = new openpgp.packet.List();
 		msg.read(openpgp.armor.decode(armored_msg).data);
 
 		msg[0].decrypt(key);
@@ -317,14 +316,12 @@ unit.register("Packet testing", function() {
 
 		var text = msg[1].packets[0].packets[0].data;
 
+    expect(text).to.equal('Hello world!');
+    done();
+  });
 
-
-		return new unit.result('Secret key encryption/decryption test',
-			text == 'Hello world!');
-	}, function() {
-	
-
-		var key = new openpgp.packet.list();
+  it('Secret key reading with signature verification.', function(done) {
+		var key = new openpgp.packet.List();
 		key.read(openpgp.armor.decode(armored_key).data);
 
 
@@ -337,14 +334,14 @@ unit.register("Packet testing", function() {
 		verified = verified && key[4].verify(key[0],
 			{
 				key: key[0],
-				bind: key[3],
-			})
+				bind: key[3]
+			});
 
+    expect(verified).to.be.true;
+    done();
+  });
 
-		return new unit.result('Secret key reading with signature verification.',
-			verified == true);
-	}, function() {
-
+  it('Reading a signed, encrypted message.', function(done) {
 		var armored_msg = 
 			'-----BEGIN PGP MESSAGE-----\n' +
 			'Version: GnuPG v2.0.19 (GNU/Linux)\n' +
@@ -361,30 +358,27 @@ unit.register("Packet testing", function() {
 			'=htrB\n' +
 			'-----END PGP MESSAGE-----'
 
-		var key = new openpgp.packet.list();
+		var key = new openpgp.packet.List();
 		key.read(openpgp.armor.decode(armored_key).data);
 		key[3].decrypt('test')
 
-		var msg = new openpgp.packet.list();
+		var msg = new openpgp.packet.List();
 		msg.read(openpgp.armor.decode(armored_msg).data);
-
 
 		msg[0].decrypt(key[3]);
 		msg[1].decrypt(msg[0].sessionKeyAlgorithm, msg[0].sessionKey);
 
 		var payload = msg[1].packets[0].packets
 
-
-
 		var verified = payload[2].verify(key[0], payload[1]);
 
+    expect(verified).to.be.true;
+    done();
+  });
 
-
-		return new unit.result('Reading a signed, encrypted message.',
-			verified == true);
-	}, function() {
-		var key = new openpgp.packet.list();
-		key.push(new openpgp.packet.secret_key);
+  it('Writing and encryption of a secret key packet.', function(done) {
+		var key = new openpgp.packet.List();
+		key.push(new openpgp.packet.SecretKey);
 
 		var rsa = new openpgp.crypto.publicKey.rsa(),
 			mpi = rsa.generate(512, "10001")
@@ -393,7 +387,7 @@ unit.register("Packet testing", function() {
 		var mpi = [mpi.n, mpi.ee, mpi.d, mpi.p, mpi.q, mpi.u];
 
 		mpi = mpi.map(function(k) {
-				var mpi = new openpgp.mpi();
+				var mpi = new openpgp.MPI();
 				mpi.fromBigInteger(k);
 				return mpi;
 		});
@@ -404,16 +398,16 @@ unit.register("Packet testing", function() {
 
 		var raw = key.write();
 
-		var key2 = new openpgp.packet.list();
+		var key2 = new openpgp.packet.List();
 		key2.read(raw);
 		key2[0].decrypt('hello');
 	
-	
-		return new unit.result('Writing and encryptio of a secret key packet.',
-			key[0].mpi.toString() == key2[0].mpi.toString());
-	}, function() {
+	  expect(key[0].mpi.toString()).to.equal(key2[0].mpi.toString());
+    done();
+  });
 
-		var key = new openpgp.packet.secret_key();
+  it('Writing and verification of a signature packet.', function(done) {
+		var key = new openpgp.packet.SecretKey();
 
 		var rsa = new openpgp.crypto.publicKey.rsa,
 			mpi = rsa.generate(512, "10001")
@@ -421,16 +415,16 @@ unit.register("Packet testing", function() {
 		var mpi = [mpi.n, mpi.ee, mpi.d, mpi.p, mpi.q, mpi.u];
 
 		mpi = mpi.map(function(k) {
-				var mpi = new openpgp.mpi();
+				var mpi = new openpgp.MPI();
 				mpi.fromBigInteger(k);
 				return mpi;
 		});
 
 		key.mpi = mpi;
 
-		var signed = new openpgp.packet.list(),
-			literal = new openpgp.packet.literal(),
-			signature = new openpgp.packet.signature();
+		var signed = new openpgp.packet.List(),
+			literal = new openpgp.packet.Literal(),
+			signature = new openpgp.packet.Signature();
 
 		literal.setText('Hello world');
 
@@ -445,26 +439,12 @@ unit.register("Packet testing", function() {
 
 		var raw = signed.write();
 
-		var signed2 = new openpgp.packet.list();
+		var signed2 = new openpgp.packet.List();
 		signed2.read(raw);
 
 		var verified = signed2[1].verify(key, signed2[0]);
-	
-	
-		return new unit.result('Writing and verification of a signature packet.',
-			verified == true);
-	}];
 
-
-
-	tests.reverse();
-
-	var results = [];
-
-	for(var i in tests) {
-		results.push(tests[i]());
-	}
-	
-	
-	return results;
+    expect(verified).to.be.true;
+    done();
+  });
 });
