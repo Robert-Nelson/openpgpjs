@@ -24,6 +24,7 @@
     "grunt-text-replace": "*",
     "grunt-jsbeautifier": "*",
     "grunt-contrib-jshint": "*",
-    "grunt-jsdoc": "*"
+    "grunt-jsdoc": "*",
+    "github": "git+http://github.com/Robert-Nelson/node-github.git"
   }
 }
