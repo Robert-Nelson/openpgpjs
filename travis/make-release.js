@@ -50,6 +50,20 @@ client.repos.getAllReleases(
               }
             }
           );
+          item.assets.forEach(function (asset) {
+            client.repos.deleteReleaseAsset(
+              {
+                "owner": release.owner,
+                "repo": release.repo,
+                "id": asset.id
+              },
+              function (err, res) {
+                if (err) {
+                  console.log("repos.deleteReleaseAsset:\n", err);
+                }
+              }
+            );
+          });
         }
       });
       if (!release.id) {
