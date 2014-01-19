@@ -1,5 +1,4 @@
 var fs = require('fs');
-var process = require('process');
 
 var Client = require('github');
 
