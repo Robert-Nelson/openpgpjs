@@ -50,6 +50,9 @@ client.repos.getAllReleases(
               }
             }
           );
+
+          var count = item.assets.length;
+
           item.assets.forEach(function (asset) {
             client.repos.deleteReleaseAsset(
               {
@@ -58,7 +61,11 @@ client.repos.getAllReleases(
                 "id": asset.id
               },
               function (err, res) {
-                if (err) {
+                if (!err) {
+                  if (--count <= 0) {
+                    uploadAssets(client, pkg, release);
+                  }
+                } else {
                   console.log("repos.deleteReleaseAsset:\n", err);
                 }
               }
@@ -72,33 +79,35 @@ client.repos.getAllReleases(
           function (err, res) {
             if (!err) {
               release.id = res.id;
+              uploadAssets(client, pkg, release);
             } else {
               console.log("repos.createRelease:\n", err);
             }
           }
         );
       }
-      if (release.id) {
-        [ "openpgp.min.js", pkg.name + "-" + pkg.version + ".tgz" ].forEach(function (asset) {
-          client.repos.uploadReleaseAsset(
-            {
-              "owner": release.owner,
-              "repo": release.repo,
-              "id": release.id,
-              "content_type": "text/javascript",
-              "name": asset,
-              "content": fs.readFileSync("dist/" + asset)
-            },
-            function (err, res) {
-              if (err) {
-                console.log("repos.uploadReleaseAsset:\n", err);
-              }
-            }
-          );
-        });
-      }
     } else {
       console.log("repos.getAllReleases:\n", err);
     }
   }
 );
+
+function uploadAssets(client, pkg, release) {
+  [ "openpgp.min.js", pkg.name + "-" + pkg.version + ".tgz" ].forEach(function (asset) {
+    client.repos.uploadReleaseAsset(
+      {
+        "owner": release.owner,
+        "repo": release.repo,
+        "id": release.id,
+        "content_type": "text/javascript",
+        "name": asset,
+        "content": fs.readFileSync("dist/" + asset)
+      },
+      function (err, res) {
+        if (err) {
+          console.log("repos.uploadReleaseAsset:\n", err);
+        }
+      }
+    );
+  });
+}
