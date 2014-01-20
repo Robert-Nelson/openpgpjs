@@ -2,10 +2,13 @@ language: node_js
 node_js:
 - '0.10'
 - '0.8'
+branches:
+  except:
+  - LatestDev
 before_install:
 - npm install -g grunt-cli
 after_success:
 - travis/success.sh
 env:
   global:
-    secure: MvbyenaGUUqRBJ0GWF8cPiY5KdBGKsqrrJNqjCIXFgMLtqc41gEpCirJw5/cBQiVIdyt8mEUolQjUe8JXo5fW7m+cvESOaBmSlT6aJ25qOMxcqBQ8B163cUPz1LRZoYBXgEak21DdC4cbG+zROX3TUiAPj4mwVnDO5Cj7VkLx4I=
+    secure: d1ru6jO2EI4m+dbgMrPYBiWw6JRauSOd/1Bj0DuvW2cWNii+JvRnVU7awaE6fERivd4608nM479yHP/LSZkatwc1ZJrKP97AQTr8KvW2IJSwejcCmdjSZgNkr8U/V7Zh0LZfFZUbHclZeltNilik1NuN6dJHKwBoru7Ga8TQS9U=
