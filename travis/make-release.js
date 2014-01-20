@@ -41,36 +41,18 @@ client.repos.getAllReleases(
     if (!err) {
       res.forEach(function (item) {
         if (item.tag_name == "LatestDev") {
-          release.id = item.id;
-          client.repos.editRelease(
-            release,
+          client.repos.deleteRelease(
+            {
+              "owner": release.owner,
+              "repo": release.repo,
+              "id": item.id
+            },
             function (err, res) {
               if (err) {
-                console.log("repos.editRelease:\n", err);
+                console.log("repos.deleteRelease:\n", err);
               }
             }
           );
-
-          var count = item.assets.length;
-
-          item.assets.forEach(function (asset) {
-            client.repos.deleteReleaseAsset(
-              {
-                "owner": release.owner,
-                "repo": release.repo,
-                "id": asset.id
-              },
-              function (err, res) {
-                if (!err) {
-                  if (--count <= 0) {
-                    uploadAssets(client, pkg, release);
-                  }
-                } else {
-                  console.log("repos.deleteReleaseAsset:\n", err);
-                }
-              }
-            );
-          });
         }
       });
       if (!release.id) {
