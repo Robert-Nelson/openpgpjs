@@ -39,6 +39,7 @@ client.repos.getAllReleases(
   },
   function (err, res) {
     if (!err) {
+      var itemCount = res.length;
       res.forEach(function (item) {
         if (item.tag_name == "LatestDev") {
           client.repos.deleteRelease(
@@ -51,28 +52,34 @@ client.repos.getAllReleases(
               if (err) {
                 console.log("repos.deleteRelease:\n", err);
               }
+              if (--itemCount <= 0) {
+                createRelease(client, pkg, release);
+              }
             }
           );
+        } else if (--itemCount <= 0) {
+          createRelease(client, pkg, release);
         }
       });
-      if (!release.id) {
-        client.repos.createRelease(
-          release,
-          function (err, res) {
-            if (!err) {
-              release.id = res.id;
-              uploadAssets(client, pkg, release);
-            } else {
-              console.log("repos.createRelease:\n", err);
-            }
-          }
-        );
-      }
     } else {
       console.log("repos.getAllReleases:\n", err);
     }
   }
 );
+
+function createRelease(client, pkg, release) {
+  client.repos.createRelease(
+    release,
+    function (err, res) {
+      if (!err) {
+        release.id = res.id;
+        uploadAssets(client, pkg, release);
+      } else {
+        console.log("repos.createRelease:\n", err);
+      }
+    }
+  );
+}
 
 function uploadAssets(client, pkg, release) {
   [ "openpgp.min.js", pkg.name + "-" + pkg.version + ".tgz" ].forEach(function (asset) {
