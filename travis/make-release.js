@@ -3,7 +3,7 @@ var fs = require('fs');
 var Client = require('github');
 
 var repoPath = process.env['TRAVIS_REPO_SLUG'].split('/');
-var commitSHA = process.env["GITHUB_COMMIT"];
+var commitSHA = process.env["TRAVIS_COMMIT"];
 
 var owner = repoPath[0];
 var repo = repoPath[1];
