@@ -16,7 +16,7 @@ var release = {
   "repo": repo,
   "tag_name": "LatestDev",
   "name": "v" + pkg.version + " (Unstable)",
-  "body": "This is a test of auto release.",
+  "body": "The latest tested version of the master branch.\n\nTravis-CI build #" + process.env['TRAVIS_BUILD_NUMBER'] + ".",
   "prerelease": true
 };
 
