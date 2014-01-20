@@ -8,4 +8,4 @@ after_success:
 - travis/success.sh
 env:
   global:
-    secure: PSpqZ7Q/kyE4i6cdb+8vHivgT+28f1r+sdxuG6mfugst66ZN5ON0ECPcsEjxP3RF0qDGMTJGZ6Oho7cdt069kWWUlJ7d8CPn0X8C63CKGKR+WykApSzA8V93y0zaEk43rTVRgH0d069XSfPjlHXgCQcFGUO8TA1Mlwr7tTJ6Jo4=
+    secure: MvbyenaGUUqRBJ0GWF8cPiY5KdBGKsqrrJNqjCIXFgMLtqc41gEpCirJw5/cBQiVIdyt8mEUolQjUe8JXo5fW7m+cvESOaBmSlT6aJ25qOMxcqBQ8B163cUPz1LRZoYBXgEak21DdC4cbG+zROX3TUiAPj4mwVnDO5Cj7VkLx4I=
