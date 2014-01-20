@@ -142,7 +142,7 @@ function createRelease() {
 }
 
 function uploadAssets() {
-  [ "openpgp.min.js", pkg.name + "-" + pkg.version + ".tgz" ].forEach(function (asset) {
+  [ "openpgp.min.js", pkg.name + "-" + pkg.version + ".tgz", "docs.zip" ].forEach(function (asset) {
     client.repos.uploadReleaseAsset(
       {
         "owner": release.owner,
