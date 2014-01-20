@@ -39,10 +39,41 @@ client.repos.getAllReleases(
   },
   function (err, res) {
     if (!err) {
-      var itemCount = res.length;
-      if (itemCount > 0) {
-        res.forEach(function (item) {
-          if (item.tag_name == "LatestDev") {
+      var processed = false;
+      res.forEach(function (item) {
+        if (item.tag_name == "LatestDev") {
+          if (!processed) {
+            processed = true;
+            release.id = item.id;
+            client.repos.editRelease(
+              release,
+              function (err, res) {
+                if (!err) {
+                  var assetCount = item.assets.length;
+                  if (assetCount > 0) {
+                    item.assets.forEach(function (asset) {
+                      client.repos.deleteReleaseAsset(
+                        {
+                          "owner": release.owner,
+                          "repo": release.repo,
+                          "id": asset.id
+                        },
+                        function (err, res) {
+                          if (--assetCount <= 0) {
+                            uploadAssets(client, pkg, release);
+                          }
+                        }
+                      );
+                    });
+                  } else {
+                    uploadAssets(client, pkg, release);
+                  }
+                } else {
+                  console.log("repos.editRelease:\n", err);
+                }
+              }
+            );
+          } else {
             client.repos.deleteRelease(
               {
                 "owner": release.owner,
@@ -53,37 +84,29 @@ client.repos.getAllReleases(
                 if (err) {
                   console.log("repos.deleteRelease:\n", err);
                 }
-                if (--itemCount <= 0) {
-                  createRelease(client, pkg, release);
-                }
               }
             );
-          } else if (--itemCount <= 0) {
-            createRelease(client, pkg, release);
           }
-        });
-      } else {
-        createRelease(client, pkg, release);
+        }
+      });
+      if (!processed) {
+        client.repos.createRelease(
+          release,
+          function (err, res) {
+            if (!err) {
+              release.id = res.id;
+              uploadAssets(client, pkg, release);
+            } else {
+              console.log("repos.createRelease:\n", err);
+            }
+          }
+        );
       }
     } else {
       console.log("repos.getAllReleases:\n", err);
     }
   }
 );
-
-function createRelease(client, pkg, release) {
-  client.repos.createRelease(
-    release,
-    function (err, res) {
-      if (!err) {
-        release.id = res.id;
-        uploadAssets(client, pkg, release);
-      } else {
-        console.log("repos.createRelease:\n", err);
-      }
-    }
-  );
-}
 
 function uploadAssets(client, pkg, release) {
   [ "openpgp.min.js", pkg.name + "-" + pkg.version + ".tgz" ].forEach(function (asset) {
