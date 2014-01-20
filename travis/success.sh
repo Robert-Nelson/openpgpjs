@@ -10,7 +10,7 @@ if [ "${TRAVIS_NODE_VERSION}" == "0.10" -a "${TRAVIS_BRANCH}" == "auto-release" 
     git config user.email "nobody@travis-ci.org"
     git config credential.https://github.com.username ${GITHUB_TOKEN}
     rm -rf doc
-    cp -r ../doc .
+    cp -r ../../doc .
     git add --all doc
     git commit -m "Travis CI Docs build #${TRAVIS_BUILD_NUMBER}"
     git push
