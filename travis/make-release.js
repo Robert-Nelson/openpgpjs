@@ -40,27 +40,31 @@ client.repos.getAllReleases(
   function (err, res) {
     if (!err) {
       var itemCount = res.length;
-      res.forEach(function (item) {
-        if (item.tag_name == "LatestDev") {
-          client.repos.deleteRelease(
-            {
-              "owner": release.owner,
-              "repo": release.repo,
-              "id": item.id
-            },
-            function (err, res) {
-              if (err) {
-                console.log("repos.deleteRelease:\n", err);
+      if (itemCount > 0) {
+        res.forEach(function (item) {
+          if (item.tag_name == "LatestDev") {
+            client.repos.deleteRelease(
+              {
+                "owner": release.owner,
+                "repo": release.repo,
+                "id": item.id
+              },
+              function (err, res) {
+                if (err) {
+                  console.log("repos.deleteRelease:\n", err);
+                }
+                if (--itemCount <= 0) {
+                  createRelease(client, pkg, release);
+                }
               }
-              if (--itemCount <= 0) {
-                createRelease(client, pkg, release);
-              }
-            }
-          );
-        } else if (--itemCount <= 0) {
-          createRelease(client, pkg, release);
-        }
-      });
+            );
+          } else if (--itemCount <= 0) {
+            createRelease(client, pkg, release);
+          }
+        });
+      } else {
+        createRelease(client, pkg, release);
+      }
     } else {
       console.log("repos.getAllReleases:\n", err);
     }
