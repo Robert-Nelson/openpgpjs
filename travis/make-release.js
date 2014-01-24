@@ -5,14 +5,14 @@ var Client = require('github');
 var repoPath = process.env['TRAVIS_REPO_SLUG'].split('/');
 var commitSHA = process.env["TRAVIS_COMMIT"];
 
-var owner = repoPath[0];
+var user = repoPath[0];
 var repo = repoPath[1];
 var token = process.env['GITHUB_TOKEN'];
 
 var pkg = JSON.parse(fs.readFileSync('package.json', { encoding: 'utf8' }));
 
 var release = {
-  "owner": owner,
+  "user": user,
   "repo": repo,
   "tag_name": "LatestDev",
   "name": "v" + pkg.version + " (Unstable)",
@@ -35,7 +35,7 @@ client.authenticate(
 
 client.gitdata.updateReference(
   {
-    "owner": release.owner,
+    "user": release.user,
     "repo": release.repo,
     "ref": "tags/" + release.tag_name,
     "sha": commitSHA
@@ -44,7 +44,7 @@ client.gitdata.updateReference(
     if (err) {
       client.gitdata.createReference(
         {
-          "owner": release.owner,
+          "user": release.user,
           "repo": release.repo,
           "ref": "refs/tags/" + release.tag_name,
           "sha": commitSHA
@@ -66,7 +66,7 @@ client.gitdata.updateReference(
 function createRelease() {
   client.repos.getAllReleases(
     {
-      "owner": release.owner,
+      "user": release.user,
       "repo": release.repo
     },
     function (err, res) {
@@ -86,7 +86,7 @@ function createRelease() {
                       item.assets.forEach(function (asset) {
                         client.repos.deleteReleaseAsset(
                           {
-                            "owner": release.owner,
+                            "user": release.user,
                             "repo": release.repo,
                             "id": asset.id
                           },
@@ -108,7 +108,7 @@ function createRelease() {
             } else {
               client.repos.deleteRelease(
                 {
-                  "owner": release.owner,
+                  "user": release.user,
                   "repo": release.repo,
                   "id": item.id
                 },
@@ -145,7 +145,7 @@ function uploadAssets() {
   [ "openpgp.min.js", pkg.name + "-" + pkg.version + ".tgz", "docs.zip" ].forEach(function (asset) {
     client.repos.uploadReleaseAsset(
       {
-        "owner": release.owner,
+        "user": release.user,
         "repo": release.repo,
         "id": release.id,
         "content_type": "text/javascript",
