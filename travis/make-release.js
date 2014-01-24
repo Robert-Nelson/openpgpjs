@@ -42,6 +42,7 @@ client.gitdata.updateReference(
   },
   function (err, res) {
     if (err) {
+      console.log("repos.updateReference:\n", err);
       client.gitdata.createReference(
         {
           "user": release.user,
